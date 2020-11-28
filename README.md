@@ -35,7 +35,8 @@ export default class Animal extends BaseModel {
     return 'animals'
   }
 
-  static get schemaDefinition(table) {
+  static get schemaDefinition() {
+    const table = this.tableDefinition()
     // More information in types table
     table.id() // int auto increment primary key
     table.string('identification_id').unique()
@@ -46,6 +47,7 @@ export default class Animal extends BaseModel {
     table.float('weight').nullAble()
     table.integer('age').nullAble()
     table.timestamps() // created_at and updated_at dateTime collumns
+    return table
   }
 }
 ```
