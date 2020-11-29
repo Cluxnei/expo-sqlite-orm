@@ -1,6 +1,6 @@
-import BaseModel from './orm'
+import BaseModel from '../orm'
 
-export default class Model extends BaseModel {
+export default class User extends BaseModel {
     constructor(props) {
         super(props)
     }

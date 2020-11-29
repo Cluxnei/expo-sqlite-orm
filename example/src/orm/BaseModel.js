@@ -36,4 +36,8 @@ export default class BaseModel {
     query() {
         return this.builder
     }
+
+    static query() {
+        return new this().query()
+    }
 }

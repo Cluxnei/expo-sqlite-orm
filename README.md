@@ -220,33 +220,33 @@ Animal.query().destroy() // Also destroys all
 
 ### Query and **operations**
 
-| Method        | Description or translation  |
-| ------------- |:-------------:|
-| query() | Start a query builder |
-| where('collumn', 'operator', 'value') | WHERE collumn OPERATOR value |
-| whereNull('collumn') | WHERE collumn IS NULL |
-| whereNotNull('collumn') | WHERE collumn NOT IS NULL |
-| orderBy('collumns') | ORDER BY collumn ASC |
-| orderByDesc('collumns') | ORDER BY collumn DESC |
-| limit(num) | LIMIT num |
-| count('collumn') | SELECT COUNT(collumn) default is id |
-| max('collumn') | SELECT max(collumn) |
-| min('collumn') | SELECT min(collumn) |
-| avg('collumn') | SELECT avg(collumn) |
-| select(...collumns) or select(['collumn', ...]) | SELECT ... |
-| selectRaw('raw expression') | SELECT raw expression |
-| exists() | QUERY ... EXISTS |
-| doesntExist() | QUERY ... NOT EXISTS |
-| distinct('collumn') | SELECT DISTINCT collumn |
-| groupBy(...collumns) | QUERY ... GROUP BY collumns |
-| orWhere('collumn', 'operator', 'value') | OR WHERE collumn OPERATOR value |
-| whereIn('collumn', [...values]) | WHERE collumn IN(values) |
-| orWhereIn('collumn', [...values]) | OR WHERE collumn IN(values)  |
-| whereNotIn('collumn', [...values]) | WHERE collumn NOT IN(values)  |
-| orWhereNotIn('collumn', [...values]) | OR WHERE collumn NOT IN(values)  |
-| whereRaw('expression') | WHERE raw expression |
-| orWhereRaw('expression') | OR WHERE raw expression |
-| | |
+| Method        | Description or translation  | Implementation |
+| ---------------- |:----------------:|:----:|
+| query() | Start a query builder | OK |
+| where('collumn', 'operator', 'value') | WHERE collumn OPERATOR value | |
+| whereNull('collumn') | WHERE collumn IS NULL | |
+| whereNotNull('collumn') | WHERE collumn NOT IS NULL | |
+| orderBy('collumns') | ORDER BY collumn ASC | |
+| orderByDesc('collumns') | ORDER BY collumn DESC | |
+| limit(count) | LIMIT count | OK |
+| count('collumn') | SELECT COUNT(collumn) default is id | |
+| max('collumn') | SELECT max(collumn) | |
+| min('collumn') | SELECT min(collumn) | |
+| avg('collumn') | SELECT avg(collumn) | |
+| select(...collumns) or select(['collumn', ...]) | SELECT ... | OK |
+| selectRaw('raw expression') | SELECT raw expression | OK |
+| exists() | QUERY ... EXISTS | |
+| doesntExist() | QUERY ... NOT EXISTS | |
+| distinct('collumn') | SELECT DISTINCT collumn | OK |
+| groupBy(...collumns) | QUERY ... GROUP BY collumns | |
+| orWhere('collumn', 'operator', 'value') | OR WHERE collumn OPERATOR value | |
+| whereIn('collumn', [...values]) | WHERE collumn IN(values) | |
+| orWhereIn('collumn', [...values]) | OR WHERE collumn IN(values)  | |
+| whereNotIn('collumn', [...values]) | WHERE collumn NOT IN(values)  | |
+| orWhereNotIn('collumn', [...values]) | OR WHERE collumn NOT IN(values)  | |
+| whereRaw('expression') | WHERE raw expression | |
+| orWhereRaw('expression') | OR WHERE raw expression | |
+| | | |
 
 ## How to exec a sql manually?
 
