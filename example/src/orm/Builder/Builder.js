@@ -1,4 +1,5 @@
 const isFunction = (fn) => fn && {}.toString.call(fn) === '[object Function]';
+
 export default class Builder {
     constructor(database, tableName, schemaDefinition) {
         this.database = database
@@ -147,6 +148,11 @@ export default class Builder {
 
     concatSemicolon() {
         this.query += ';'
+    }
+
+    get createTable() {
+        this.query = `CREATE TABLE IF NOT EXISTS ${this.tableName} (${this.schemaDefinition.toCreateTableBody});`
+        return this.query
     }
 
 }

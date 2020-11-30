@@ -55,4 +55,19 @@ export default class Column {
     isBoolean() {
         return this.type === types.BOOLEAN
     }
+
+    get toCreateTable() {
+        const parts = [this.name, this.type, this.isNull ? 'NULL' : 'NOT NULL']
+        this.isPrimary && parts.push('PRIMARY KEY')
+        this.isAutoIncrement && parts.push('AUTOINCREMENT')
+        this.isUnique && parts.push('UNIQUE')
+        if (this.isTimestampcolumn && this.isUseCurrent) {
+            this.defaultValue = 'CURRENT_TIMESTAMP'
+        }
+        if (typeof this.defaultValue !== 'undefined') {
+            parts.push(`DEFAULT ${this.needQuotationMarks() ? `'${this.defaultValue}'` : this.defaultValue}`)
+        }
+        return parts.join(' ')
+    }
+
 }

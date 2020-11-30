@@ -15,6 +15,7 @@ export default function App() {
 
   useEffect(() => {
     console.log(t1());
+      console.log(User.createTable())
   }, [])
   return (
     <View style={{ backgroundColor: 'black', justifyContent: 'center', alignItems: 'center', flex: 1 }}>

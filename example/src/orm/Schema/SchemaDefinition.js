@@ -36,7 +36,7 @@ export default class SchemaDefinition {
     }
 
     timestamps(createdAtColumnName = 'createdAt', updatedAtColumnName = 'updatedAt') {
-        this.dateTime(createdAtColumnName).default(new Date().getTime()).timestampColumn()
+        this.dateTime(createdAtColumnName).timestampColumn().useCurrent()
         this.dateTime(updatedAtColumnName).nullAble().timestampColumn()
     }
 
@@ -85,6 +85,10 @@ export default class SchemaDefinition {
 
     findColumnByName(name) {
         return [...this.columns].find((column) => column.name === name)
+    }
+
+    get toCreateTableBody() {
+        return [...this.columns].map((column) => column.toCreateTable).join(',')
     }
 
 }

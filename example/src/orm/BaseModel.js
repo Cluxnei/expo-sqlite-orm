@@ -1,5 +1,6 @@
 import SchemaDefinition from './Schema/SchemaDefinition'
 import Builder from './Builder/Builder'
+import DatabaseLayer from "./DatabaseLayer";
 
 
 export default class BaseModel {
@@ -21,6 +22,10 @@ export default class BaseModel {
         return new Builder(this.database, this.tableName, this.schemaDefinition)
     }
 
+    get databaseLayer() {
+        return new DatabaseLayer(this.database, this.tableName)
+    }
+
     get tableName() {
         throw new Error('Table name not defined')
     }
@@ -39,5 +44,13 @@ export default class BaseModel {
 
     static query() {
         return new this().query()
+    }
+
+    createTable() {
+        return this.databaseLayer.executeSql(this.builder.createTable).then(() => true).catch(() => false)
+    }
+
+    static createTable() {
+        return new this().createTable()
     }
 }

@@ -1,4 +1,5 @@
 import BaseModel from '../orm'
+import * as SQLite from 'expo-sqlite'
 
 export default class User extends BaseModel {
     constructor(props) {
@@ -6,7 +7,7 @@ export default class User extends BaseModel {
     }
 
     get database() {
-        return async () => null //SQLite.openDatabase('database.db')
+        return async () => SQLite.openDatabase('database.db')
     }
 
     get tableName() {
