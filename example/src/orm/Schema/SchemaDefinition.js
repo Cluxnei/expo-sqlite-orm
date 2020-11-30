@@ -1,18 +1,10 @@
 import Column from './Collumn'
+import {types} from './types';
 
 export default class SchemaDefinition {
     constructor() {
         this.columns = new Set()
-        this.types = {
-            INTEGER: 'INTEGER',
-            FLOAT: 'FLOAT',
-            TEXT: 'TEXT',
-            NUMERIC: 'NUMERIC',
-            DATE: 'DATE',
-            DATETIME: 'DATETIME',
-            BOOLEAN: 'BOOLEAN',
-            JSON: 'JSON'
-        }
+        this.types = types
     }
 
     appendColumn(name, type) {
@@ -89,6 +81,10 @@ export default class SchemaDefinition {
 
     get columnsNames() {
         return [...this.columns].map((column) => column.name)
+    }
+
+    findColumnByName(name) {
+        return [...this.columns].find((column) => column.name === name)
     }
 
 }

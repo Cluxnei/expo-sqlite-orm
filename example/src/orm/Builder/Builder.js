@@ -7,6 +7,7 @@ export default class Builder {
         // query builder
         this.selectColumns = new Set
         this.wheres = []
+        this.scopedWheres = []
         this.query = ''
         this.limitRows = null
         this.distinctSelect = false
@@ -31,10 +32,18 @@ export default class Builder {
     }
 
     whereFunction(fn) {
+        const freshBuilder = new Builder(this.database, this.tableName, this.schemaDefinition)
+        const callBackReturn = fn(freshBuilder)
+        const builder = callBackReturn ? callBackReturn : freshBuilder
+        this.scopedWheres.push(['AND', builder.wheres])
         return this
     }
 
     orWhereFunction(fn) {
+        const freshBuilder = new Builder(this.database, this.tableName, this.schemaDefinition)
+        const callBackReturn = fn(freshBuilder)
+        const builder = callBackReturn ? callBackReturn : freshBuilder
+        this.scopedWheres.push(['OR', builder.wheres])
         return this
     }
 
@@ -87,13 +96,47 @@ export default class Builder {
         this.query += ` FROM ${this.tableName}`
     }
 
-    buildWhere() {
-        if (this.wheres.length === 0) {
-            return
+    concatWhereValue(column, value) {
+        const columnSchema = this.schemaDefinition.findColumnByName(column)
+        if (columnSchema.needQuotationMarks()) {
+            return `'${value}'`
         }
-        const [_c, _o, _v] = this.wheres.shift()
-        this.query += ` WHERE ${_c} ${_o} ${_v}`
-        this.query += this.wheres.reduce((q, [c, o, v, s]) => `${q} ${s} ${c} ${o} ${v}`, '')
+        if (columnSchema.isBoolean()) {
+            return Boolean(value) ? 1 : 0
+        }
+        return value
+    }
+
+    sanitizeWheres() {
+        this.wheres = this.wheres.filter(([c]) => typeof this.schemaDefinition.findColumnByName(c) !== 'undefined')
+        this.scopedWheres.forEach(([separator, scope], index) => {
+            this.scopedWheres[index] = [
+                separator,
+                scope.filter(([c]) => typeof this.schemaDefinition.findColumnByName(c) !== 'undefined')
+            ]
+        })
+        this.scopedWheres = this.scopedWheres.filter(([_, scope]) => scope.length > 0)
+    }
+
+    buildWhere() {
+        this.sanitizeWheres()
+        const hasWheres = this.wheres.length > 0
+        const hasScopedWheres = this.scopedWheres.length > 0
+        if (hasScopedWheres || hasWheres) {
+            this.query += ' WHERE '
+        }
+        if (hasScopedWheres) {
+            this.query += this.scopedWheres.reduce((q, [s, scope], i) => {
+                return `${q} ${i === 0 ? '' : s} (${
+                    scope.reduce((sq, [c, o, v, s], j) => 
+                        `${sq} ${j === 0 ? '' : s} ${c} ${o} ${this.concatWhereValue(c, v)}`, '')
+                })`
+            }, '')
+        }
+        if (hasWheres) {
+            this.query += this.wheres.reduce((q, [c, o, v, s], i) =>
+                `${q} ${i === 0 && !hasScopedWheres ? '' : s} ${c} ${o} ${this.concatWhereValue(c, v)}`, '')
+        }
     }
 
     buildLimit() {

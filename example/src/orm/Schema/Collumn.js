@@ -1,3 +1,5 @@
+import {needQuotationMarksTypes, types} from "./types";
+
 export default class Column {
     constructor(name, type) {
         this.name = name
@@ -44,5 +46,13 @@ export default class Column {
     timestampColumn() {
         this.isTimestampcolumn = true
         return this
+    }
+
+    needQuotationMarks() {
+        return this.type in needQuotationMarksTypes
+    }
+
+    isBoolean() {
+        return this.type === types.BOOLEAN
     }
 }
