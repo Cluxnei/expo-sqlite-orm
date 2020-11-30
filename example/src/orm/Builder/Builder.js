@@ -1,7 +1,11 @@
+import DatabaseLayer from "../DatabaseLayer";
+
 const isFunction = (fn) => fn && {}.toString.call(fn) === '[object Function]';
 
-export default class Builder {
-    constructor(database, tableName, schemaDefinition) {
+export default class Builder extends DatabaseLayer {
+
+    constructor(database, tableName, schemaDefinition, debugLogs) {
+        super(database, tableName, debugLogs)
         this.database = database
         this.tableName = tableName
         this.schemaDefinition = schemaDefinition
@@ -9,6 +13,7 @@ export default class Builder {
         this.selectColumns = new Set
         this.wheres = []
         this.scopedWheres = []
+        this.whereValues = []
         this.query = ''
         this.limitRows = null
         this.distinctSelect = false
@@ -99,13 +104,7 @@ export default class Builder {
 
     concatWhereValue(column, value) {
         const columnSchema = this.schemaDefinition.findColumnByName(column)
-        if (columnSchema.needQuotationMarks()) {
-            return `'${value}'`
-        }
-        if (columnSchema.isBoolean()) {
-            return Boolean(value) ? 1 : 0
-        }
-        return value
+        return columnSchema.castToDatabaseValue(value)
     }
 
     sanitizeWheres() {
@@ -129,14 +128,18 @@ export default class Builder {
         if (hasScopedWheres) {
             this.query += this.scopedWheres.reduce((q, [s, scope], i) => {
                 return `${q} ${i === 0 ? '' : s} (${
-                    scope.reduce((sq, [c, o, v, s], j) => 
-                        `${sq} ${j === 0 ? '' : s} ${c} ${o} ${this.concatWhereValue(c, v)}`, '')
+                    scope.reduce((sq, [c, o, v, s], j) => {
+                        this.whereValues.push(v)
+                        return `${sq} ${j === 0 ? '' : s} ${c} ${o} ?`
+                    }, '')
                 })`
             }, '')
         }
         if (hasWheres) {
-            this.query += this.wheres.reduce((q, [c, o, v, s], i) =>
-                `${q} ${i === 0 && !hasScopedWheres ? '' : s} ${c} ${o} ${this.concatWhereValue(c, v)}`, '')
+            this.query += this.wheres.reduce((q, [c, o, v, s], i) => {
+                this.whereValues.push(v)
+                return `${q} ${i === 0 && !hasScopedWheres ? '' : s} ${c} ${o} ?`
+            }, '')
         }
     }
 
@@ -153,6 +156,22 @@ export default class Builder {
     get createTable() {
         this.query = `CREATE TABLE IF NOT EXISTS ${this.tableName} (${this.schemaDefinition.toCreateTableBody});`
         return this.query
+    }
+
+    get() {
+        this.buildQuery()
+        return this.executeSql(this.query).then(({rows: {_array}}) => _array)
+    }
+
+    find(primaryKey) {
+        this.where(this.schemaDefinition.primaryKey.name, '=', primaryKey)
+        return this
+    }
+
+    create(props) {
+        const columns = Object.keys(props), values = Object.values(props)
+        const sql = `INSERT INTO ${this.tableName} (${columns.join(',')}) VALUES (${columns.map(() => '?').join(',')})`
+        return this.executeSql(sql, values)
     }
 
 }

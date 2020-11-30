@@ -1,4 +1,4 @@
-import {needQuotationMarksTypes, types} from "./types";
+import {customTypesCasts, needQuotationMarksTypes, types} from './types';
 
 export default class Column {
     constructor(name, type) {
@@ -11,6 +11,8 @@ export default class Column {
         this.isUseCurrent = false
         this.defaultValue = undefined
         this.isTimestampcolumn = false
+        this.customTypesCasts = customTypesCasts
+        this.safeType = this.type in this.customTypesCasts ? this.customTypesCasts[this.type] : this.type
     }
 
     nullAble() {
@@ -49,15 +51,23 @@ export default class Column {
     }
 
     needQuotationMarks() {
-        return this.type in needQuotationMarksTypes
+        return needQuotationMarksTypes.includes(this.type)
     }
 
     isBoolean() {
         return this.type === types.BOOLEAN
     }
 
+    isJson() {
+        return this.type === types.JSON
+    }
+
+    isNumber() {
+        return [types.FLOAT, types.INTEGER, types.NUMERIC].includes(this.type)
+    }
+
     get toCreateTable() {
-        const parts = [this.name, this.type, this.isNull ? 'NULL' : 'NOT NULL']
+        const parts = [this.name, this.safeType, this.isNull ? 'NULL' : 'NOT NULL']
         this.isPrimary && parts.push('PRIMARY KEY')
         this.isAutoIncrement && parts.push('AUTOINCREMENT')
         this.isUnique && parts.push('UNIQUE')
@@ -65,9 +75,35 @@ export default class Column {
             this.defaultValue = 'CURRENT_TIMESTAMP'
         }
         if (typeof this.defaultValue !== 'undefined') {
-            parts.push(`DEFAULT ${this.needQuotationMarks() ? `'${this.defaultValue}'` : this.defaultValue}`)
+            parts.push(`DEFAULT ${this.castToDatabaseValue(this.defaultValue)}`)
         }
         return parts.join(' ')
+    }
+
+    castToDatabaseValue(value) {
+        if (this.needQuotationMarks()) {
+            return `'${value}'`
+        }
+        if (this.isBoolean()) {
+            return Boolean(value) ? 1 : 0
+        }
+        if (this.isJson()) {
+            return typeof value === 'string' ? value : JSON.stringify(value)
+        }
+        return value
+    }
+
+    castToModelAttribute(value) {
+        if (this.isBoolean()) {
+            return Boolean(value)
+        }
+        if (this.isNumber()) {
+            return Number(value)
+        }
+        if (this.isJson()) {
+            return typeof value === 'string' ? JSON.parse(value) : value
+        }
+        return value
     }
 
 }

@@ -9,7 +9,8 @@ export const types = {
     JSON: 'JSON'
 }
 
-export const needQuotationMarksTypes = {
-    [types.TEXT]: types.TEXT,
+export const needQuotationMarksTypes = [types.TEXT, types.JSON]
+
+export const customTypesCasts = {
     [types.JSON]: types.TEXT,
 }

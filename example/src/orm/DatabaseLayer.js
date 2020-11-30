@@ -1,7 +1,8 @@
 export default class DatabaseLayer {
-    constructor(database, tableName) {
+    constructor(database, tableName, debugLogs) {
         this.database = database
         this.tableName = tableName
+        this.debugLogs = debugLogs
     }
 
     async executeBulkSql(sqls, params = []) {
@@ -14,13 +15,13 @@ export default class DatabaseLayer {
                             sql,
                             params[index],
                             (_, result) => {
-                                if (__DEV__) {
+                                if (this.debugLogs) {
                                     console.log(`[SQL OK]: ${sql}`)
                                 }
                                 sqlResolve(result)
                             },
                             (_, error) => {
-                                if (__DEV__) {
+                                if (this.debugLogs) {
                                     console.warn(`[SQL ERROR]: ${error}`)
                                 }
                                 sqlReject(error)

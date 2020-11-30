@@ -7,7 +7,7 @@ export default class User extends BaseModel {
     }
 
     get database() {
-        return async () => SQLite.openDatabase('database.db')
+        return async () => SQLite.openDatabase('database1.db')
     }
 
     get tableName() {
@@ -21,7 +21,10 @@ export default class User extends BaseModel {
         table.boolean('active').default(false)
         table.float('weight').nullAble()
         table.integer('age').nullAble()
+        table.integer('role_id')
+        table.json('extra_info')
         table.timestamps()
+        table.foreign('role_id').references('id').on('roles')
         return table
     }
 }
