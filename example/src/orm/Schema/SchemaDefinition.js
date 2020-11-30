@@ -1,8 +1,8 @@
-import Collumn from './Collumn'
+import Column from './Collumn'
 
 export default class SchemaDefinition {
     constructor() {
-        this.collumns = new Set()
+        this.columns = new Set()
         this.types = {
             INTEGER: 'INTEGER',
             FLOAT: 'FLOAT',
@@ -15,10 +15,10 @@ export default class SchemaDefinition {
         }
     }
 
-    appendCollumn(name, type) {
-        const collumn = new Collumn(name, type)
-        this.collumns.add(collumn)
-        return collumn
+    appendColumn(name, type) {
+        const column = new Column(name, type)
+        this.columns.add(column)
+        return column
     }
 
     // Abbreviations
@@ -27,68 +27,68 @@ export default class SchemaDefinition {
         return this.integer('id').primaryKey().autoIncrement()
     }
 
-    int(collumnName) {
-        return this.integer(collumnName)
+    int(columnName) {
+        return this.integer(columnName)
     }
 
-    double(collumnName) {
-        return this.float(collumnName)
+    double(columnName) {
+        return this.float(columnName)
     }
 
-    bool(collumnName) {
-        return this.boolean(collumnName)
+    bool(columnName) {
+        return this.boolean(columnName)
     }
 
-    string(collumnName) {
-        return this.text(collumnName)
+    string(columnName) {
+        return this.text(columnName)
     }
 
-    timestamps(createdAtCollumnName = 'createdAt', updatedAtCollumnName = 'updatedAt') {
-        this.dateTime(createdAtCollumnName).default(new Date().getTime()).timestampCollumn()
-        this.dateTime(updatedAtCollumnName).nullAble().timestampCollumn()
+    timestamps(createdAtColumnName = 'createdAt', updatedAtColumnName = 'updatedAt') {
+        this.dateTime(createdAtColumnName).default(new Date().getTime()).timestampColumn()
+        this.dateTime(updatedAtColumnName).nullAble().timestampColumn()
     }
 
 
-    // Collumn types
+    // column types
 
-    integer(collumnName) {
-        return this.appendCollumn(collumnName, this.types.INTEGER)
+    integer(columnName) {
+        return this.appendColumn(columnName, this.types.INTEGER)
     }
 
-    text(collumnName) {
-        return this.appendCollumn(collumnName, this.types.TEXT)
+    text(columnName) {
+        return this.appendColumn(columnName, this.types.TEXT)
     }
 
-    boolean(collumnName) {
-        return this.appendCollumn(collumnName, this.types.BOOLEAN)
+    boolean(columnName) {
+        return this.appendColumn(columnName, this.types.BOOLEAN)
     }
 
-    float(collumnName) {
-        return this.appendCollumn(collumnName, this.types.FLOAT)
+    float(columnName) {
+        return this.appendColumn(columnName, this.types.FLOAT)
     }
 
-    numeric(collumnName) {
-        return this.appendCollumn(collumnName, this.types.NUMERIC)
+    numeric(columnName) {
+        return this.appendColumn(columnName, this.types.NUMERIC)
     }
 
-    date(collumnName) {
-        return this.appendCollumn(collumnName, this.types.DATETIME)
+    date(columnName) {
+        return this.appendColumn(columnName, this.types.DATETIME)
     }
 
-    dateTime(collumnName) {
-        return this.appendCollumn(collumnName, this.types.DATE)
+    dateTime(columnName) {
+        return this.appendColumn(columnName, this.types.DATE)
     }
 
-    json(collumnName) {
-        return this.appendCollumn(collumnName, this.types.JSON)
+    json(columnName) {
+        return this.appendColumn(columnName, this.types.JSON)
     }
 
     get primaryKey() {
-        return [...this.collumns].find((collumn) => collumn.isPrimary)
+        return [...this.columns].find((column) => column.isPrimary)
     }
 
-    get collumnsNames() {
-        return [...this.collumns].map((collumn) => collumn.name)
+    get columnsNames() {
+        return [...this.columns].map((column) => column.name)
     }
 
 }

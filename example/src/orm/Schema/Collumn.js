@@ -1,4 +1,4 @@
-export default class Collumn {
+export default class Column {
     constructor(name, type) {
         this.name = name
         this.type = type
@@ -8,7 +8,7 @@ export default class Collumn {
         this.isUnique = false
         this.isUseCurrent = false
         this.defaultValue = undefined
-        this.isTimestampCollumn = false
+        this.isTimestampcolumn = false
     }
 
     nullAble() {
@@ -41,8 +41,8 @@ export default class Collumn {
         return this
     }
 
-    timestampCollumn() {
-        this.isTimestampCollumn = true
+    timestampColumn() {
+        this.isTimestampcolumn = true
         return this
     }
 }

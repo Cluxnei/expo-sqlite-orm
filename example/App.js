@@ -10,7 +10,11 @@ export default function App() {
   const t4 = () => User.query().limit(10).toSql()
   const t5 = () => User.query().select('id', 'name', 'age as idade').limit(3).toSql()
   const t6 = () => User.query().select('id', 'name', 'age as idade').distinct('name').limit(3).toSql()
-  const t7 = () => User.query().toSql()
+  const t7 = () => User.query()
+      .where('name', '=', 'kelvin')
+      .where('age', '>', 2)
+      .orWhere('active', '=', false)
+      .toSql()
 
   useEffect(() => {
     console.log(t1());

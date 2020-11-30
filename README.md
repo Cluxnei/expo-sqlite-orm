@@ -46,7 +46,7 @@ export default class Animal extends BaseModel {
     table.boolean('isBird').default(false)
     table.float('weight').nullAble()
     table.integer('age').nullAble()
-    table.timestamps() // created_at and updated_at dateTime collumns
+    table.timestamps() // created_at and updated_at dateTime columns
     return table
   }
 }
@@ -58,7 +58,7 @@ export default class Animal extends BaseModel {
 
 | Method        | Equivalency   |
 | ------------- |:-------------:|
-| id('collumn_name')     | integer().primaryKey().autoIncrement() |
+| id('column_name')     | integer().primaryKey().autoIncrement() |
 | timestamps()     | dateTime('created_at').useCurrent() and dateTime('updated_at').nullAble() |
 | | |
 
@@ -66,15 +66,15 @@ export default class Animal extends BaseModel {
 
 | Method        | SQLite type   |
 | ------------- |:-------------:|
-| id('collumn_name')     | INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT |
-| int('collumn_name') or integer('collumn_name')   | INTEGER |
-| string('collumn_name') or text('collumn_name') | TEXT |
-| json('collumn_name') | TEXT |
-| boolean('collumn_name') or bool('collumn_name')  | BOOLEAN |
-| float('collumn_name') or double('collumn_name')   | FLOAT |
-| numeric('collumn_name') | NUMERIC |
-| date('collumn_name') | DATE |
-| dateTime('collumn_name') | DATETIME |
+| id('column_name')     | INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT |
+| int('column_name') or integer('column_name')   | INTEGER |
+| string('column_name') or text('column_name') | TEXT |
+| json('column_name') | TEXT |
+| boolean('column_name') or bool('column_name')  | BOOLEAN |
+| float('column_name') or double('column_name')   | FLOAT |
+| numeric('column_name') | NUMERIC |
+| date('column_name') | DATE |
+| dateTime('column_name') | DATETIME |
 | | |
 
 ### `Schema options`
@@ -86,7 +86,7 @@ export default class Animal extends BaseModel {
 | autoIncrement()     | Set auto increment |
 | unique()     | Set unique |
 | default(value)     | Set default value |
-| useCurrent()     | Only to `date` and `dateTime` collumns, use new Date().getTime() on insertion |
+| useCurrent()     | Only to `date` and `dateTime` columns, use new Date().getTime() on insertion |
 | | |
 
 ## Database operations
@@ -170,7 +170,7 @@ or
 
 ```javascript
 const props = {
-  id: 1 // required
+  id: 1, // required
   age: 3
 }
 
@@ -223,27 +223,27 @@ Animal.query().destroy() // Also destroys all
 | Method        | Description or translation  | Implementation |
 | ---------------- |:----------------:|:----:|
 | query() | Start a query builder | OK |
-| where('collumn', 'operator', 'value') | WHERE collumn OPERATOR value | |
-| whereNull('collumn') | WHERE collumn IS NULL | |
-| whereNotNull('collumn') | WHERE collumn NOT IS NULL | |
-| orderBy('collumns') | ORDER BY collumn ASC | |
-| orderByDesc('collumns') | ORDER BY collumn DESC | |
+| where('column', 'operator', 'value') | WHERE column OPERATOR value | |
+| whereNull('column') | WHERE column IS NULL | |
+| whereNotNull('column') | WHERE column NOT IS NULL | |
+| orderBy('columns') | ORDER BY column ASC | |
+| orderByDesc('columns') | ORDER BY column DESC | |
 | limit(count) | LIMIT count | OK |
-| count('collumn') | SELECT COUNT(collumn) default is id | |
-| max('collumn') | SELECT max(collumn) | |
-| min('collumn') | SELECT min(collumn) | |
-| avg('collumn') | SELECT avg(collumn) | |
-| select(...collumns) or select(['collumn', ...]) | SELECT ... | OK |
+| count('column') | SELECT COUNT(column) default is id | |
+| max('column') | SELECT max(column) | |
+| min('column') | SELECT min(column) | |
+| avg('column') | SELECT avg(column) | |
+| select(...columns) or select(['column', ...]) | SELECT ... | OK |
 | selectRaw('raw expression') | SELECT raw expression | OK |
 | exists() | QUERY ... EXISTS | |
 | doesntExist() | QUERY ... NOT EXISTS | |
-| distinct('collumn') | SELECT DISTINCT collumn | OK |
-| groupBy(...collumns) | QUERY ... GROUP BY collumns | |
-| orWhere('collumn', 'operator', 'value') | OR WHERE collumn OPERATOR value | |
-| whereIn('collumn', [...values]) | WHERE collumn IN(values) | |
-| orWhereIn('collumn', [...values]) | OR WHERE collumn IN(values)  | |
-| whereNotIn('collumn', [...values]) | WHERE collumn NOT IN(values)  | |
-| orWhereNotIn('collumn', [...values]) | OR WHERE collumn NOT IN(values)  | |
+| distinct('column') | SELECT DISTINCT column | OK |
+| groupBy(...columns) | QUERY ... GROUP BY columns | |
+| orWhere('column', 'operator', 'value') | OR WHERE column OPERATOR value | |
+| whereIn('column', [...values]) | WHERE column IN(values) | |
+| orWhereIn('column', [...values]) | OR WHERE column IN(values)  | |
+| whereNotIn('column', [...values]) | WHERE column NOT IN(values)  | |
+| orWhereNotIn('column', [...values]) | OR WHERE column NOT IN(values)  | |
 | whereRaw('expression') | WHERE raw expression | |
 | orWhereRaw('expression') | OR WHERE raw expression | |
 | | | |

@@ -8,8 +8,8 @@ export default class BaseModel {
     }
 
     setProperties(props) {
-        this.schemaDefinition.collumnsNames.forEach((collumnName) => {
-            this[collumnName] = props[collumnName] !== undefined ? props[collumnName] : null
+        this.schemaDefinition.columnsNames.forEach((columnName) => {
+            this[columnName] = props[columnName] !== undefined ? props[columnName] : null
         })
     }
 
