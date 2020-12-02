@@ -252,6 +252,10 @@ export default class Builder extends DatabaseLayer {
         return `CREATE TABLE IF NOT EXISTS ${this.tableName} (${this.schemaDefinition.toCreateTableBody});`
     }
 
+    get dropTable() {
+        return `DROP TABLE IF EXISTS ${this.tableName};`
+    }
+
     get() {
         this.buildQuery()
         return this.executeSql(this.query, this.queryValues).then(({rows: {_array}}) => _array)

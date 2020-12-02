@@ -55,8 +55,16 @@ export default class BaseModel {
         return this.builder.executeSql(this.builder.createTable).then(() => true).catch(() => false)
     }
 
+    dropTable() {
+        return this.builder.executeSql(this.builder.dropTable).then(() => true).catch(() => false)
+    }
+
     static createTable() {
         return new this().createTable()
+    }
+
+    static dropTable() {
+        return new this().dropTable()
     }
 
     save() {

@@ -14,9 +14,12 @@ You need to provide 3 things:
 
 - `database`: Instance of expo SQLite or promise with that instance
 - `tableName`: The name of the table
-- `schemaDefinition`: The columns for the model and their types, the table schema object is injected
+- `schemaDefinition`: The columns for the model and their types
   - Supported options: `nullAble()`, `primaryKey()`,
   `autoIncrement()`, `unique()`, `default(value)`, `useCurrent()`
+    ([See schema options](#schema-options))
+  - Supported types: `int()`, `string()`, `json()`, `bool()`, `float()`, `numeric()`, `date()`, `dateTime()` 
+    ([See schema definition](#schema-definition))
 
 ```javascript
 import * as SQLite from 'expo-sqlite'
