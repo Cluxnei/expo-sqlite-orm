@@ -12,21 +12,38 @@ export default class Builder extends DatabaseLayer {
         // query builder
         this.selectColumns = new Set
         this.wheres = []
-        this.scopedWheres = []
-        this.whereValues = []
+        this.queryValues = []
         this.query = ''
         this.limitRows = null
         this.distinctSelect = false
+        this.whereTypes = {
+            basic: 'basic',
+            scoped: 'scoped'
+        }
+    }
+
+    clearQuery() {
+        this.query = ''
+        this.queryValues = []
+    }
+
+    appendWhere(where, type) {
+        this.wheres.push({
+            ...where,
+            type
+        })
     }
 
     where(column, operator, value, separator = 'AND') {
         if (isFunction(column)) {
             return this.whereFunction(column)
         }
-        if (this.wheres.find(([c, o, v]) => c === column && o === operator && v === value)) {
-            return this
-        }
-        this.wheres.push([column, operator, value, separator.toUpperCase()])
+        this.appendWhere({
+            column,
+            operator,
+            value,
+            separator: separator.toUpperCase()
+        }, this.whereTypes.basic)
         return this
     }
 
@@ -40,16 +57,16 @@ export default class Builder extends DatabaseLayer {
     whereFunction(fn) {
         const freshBuilder = new Builder(this.database, this.tableName, this.schemaDefinition)
         const callBackReturn = fn(freshBuilder)
-        const builder = callBackReturn ? callBackReturn : freshBuilder
-        this.scopedWheres.push(['AND', builder.wheres])
+        const {wheres} = callBackReturn ? callBackReturn : freshBuilder
+        this.appendWhere({separator: 'AND', wheres}, this.whereTypes.scoped)
         return this
     }
 
     orWhereFunction(fn) {
         const freshBuilder = new Builder(this.database, this.tableName, this.schemaDefinition)
         const callBackReturn = fn(freshBuilder)
-        const builder = callBackReturn ? callBackReturn : freshBuilder
-        this.scopedWheres.push(['OR', builder.wheres])
+        const {wheres} = callBackReturn ? callBackReturn : freshBuilder
+        this.appendWhere({separator: 'OR', wheres}, this.whereTypes.scoped)
         return this
     }
 
@@ -95,57 +112,50 @@ export default class Builder extends DatabaseLayer {
             this.selectColumns.add('*')
         }
         const columns = [...this.selectColumns].join(',')
-        this.query = `SELECT ${this.distinctSelect ? 'DISTINCT' : ''} ${columns}`
+        this.clearQuery()
+        this.query += `SELECT ${this.distinctSelect ? 'DISTINCT' : ''} ${columns}`
     }
 
     buildFrom() {
         this.query += ` FROM ${this.tableName}`
     }
 
-    concatWhereValue(column, value) {
-        const columnSchema = this.schemaDefinition.findColumnByName(column)
-        return columnSchema.castToDatabaseValue(value)
+    resolveWhereScope(where, skipFirstSeparator = false) {
+        let sql = ''
+        where.wheres.forEach((w, index) => {
+            if (w.type === this.whereTypes.scoped) {
+                sql += this.resolveWhereScope(w, index === 0)
+            } else {
+                sql += this.resolveWhere(w, index === 0)
+            }
+        })
+        return `${skipFirstSeparator ? '' : ` ${where.separator}`} (${sql})`
     }
 
-    sanitizeWheres() {
-        this.wheres = this.wheres.filter(([c]) => typeof this.schemaDefinition.findColumnByName(c) !== 'undefined')
-        this.scopedWheres.forEach(([separator, scope], index) => {
-            this.scopedWheres[index] = [
-                separator,
-                scope.filter(([c]) => typeof this.schemaDefinition.findColumnByName(c) !== 'undefined')
-            ]
-        })
-        this.scopedWheres = this.scopedWheres.filter(([_, scope]) => scope.length > 0)
+    resolveWhere(where, skipFirstSeparator = false) {
+        this.queryValues.push(where.value)
+        return `${skipFirstSeparator ? '' : ` ${where.separator}`} ${where.column} ${where.operator} ?`
     }
 
     buildWhere() {
-        this.sanitizeWheres()
-        const hasWheres = this.wheres.length > 0
-        const hasScopedWheres = this.scopedWheres.length > 0
-        if (hasScopedWheres || hasWheres) {
-            this.query += ' WHERE '
+        if (this.wheres.length === 0) {
+            return
         }
-        if (hasScopedWheres) {
-            this.query += this.scopedWheres.reduce((q, [s, scope], i) => {
-                return `${q} ${i === 0 ? '' : s} (${
-                    scope.reduce((sq, [c, o, v, s], j) => {
-                        this.whereValues.push(v)
-                        return `${sq} ${j === 0 ? '' : s} ${c} ${o} ?`
-                    }, '')
-                })`
-            }, '')
-        }
-        if (hasWheres) {
-            this.query += this.wheres.reduce((q, [c, o, v, s], i) => {
-                this.whereValues.push(v)
-                return `${q} ${i === 0 && !hasScopedWheres ? '' : s} ${c} ${o} ?`
-            }, '')
-        }
+        let sql = ''
+        this.wheres.forEach((where, index) => {
+            if (where.type === this.whereTypes.scoped) {
+                sql += this.resolveWhereScope(where, index === 0)
+            } else {
+                sql += this.resolveWhere(where, index === 0)
+            }
+        })
+        this.sql += ` WHERE ${sql}`
     }
 
     buildLimit() {
         if (this.limitRows) {
-            this.query += ` LIMIT ${this.limitRows}`
+            this.queryValues.push(this.limitRows)
+            this.query += ` LIMIT ?`
         }
     }
 
@@ -154,13 +164,12 @@ export default class Builder extends DatabaseLayer {
     }
 
     get createTable() {
-        this.query = `CREATE TABLE IF NOT EXISTS ${this.tableName} (${this.schemaDefinition.toCreateTableBody});`
-        return this.query
+        return `CREATE TABLE IF NOT EXISTS ${this.tableName} (${this.schemaDefinition.toCreateTableBody});`
     }
 
     get() {
         this.buildQuery()
-        return this.executeSql(this.query).then(({rows: {_array}}) => _array)
+        return this.executeSql(this.query, this.queryValues).then(({rows: {_array}}) => _array)
     }
 
     find(primaryKey) {
