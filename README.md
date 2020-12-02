@@ -223,9 +223,9 @@ Animal.query().destroy() // Also destroys all
 | Method        | Description or translation  | Implementation |
 | ---------------- |:----------------:|:----:|
 | query() | Start a query builder | OK |
-| where('column', 'operator', 'value') | WHERE column OPERATOR value | |
-| whereNull('column') | WHERE column IS NULL | |
-| whereNotNull('column') | WHERE column NOT IS NULL | |
+| where('column', 'operator', 'value') | WHERE column OPERATOR value | OK |
+| whereNull('column') | WHERE column IS NULL | OK |
+| whereNotNull('column') | WHERE column NOT IS NULL | OK |
 | orderBy('columns') | ORDER BY column ASC | |
 | orderByDesc('columns') | ORDER BY column DESC | |
 | limit(count) | LIMIT count | OK |
@@ -239,18 +239,23 @@ Animal.query().destroy() // Also destroys all
 | doesntExist() | QUERY ... NOT EXISTS | |
 | distinct('column') | SELECT DISTINCT column | OK |
 | groupBy(...columns) | QUERY ... GROUP BY columns | |
-| orWhere('column', 'operator', 'value') | OR WHERE column OPERATOR value | |
-| whereIn('column', [...values]) | WHERE column IN(values) | |
-| orWhereIn('column', [...values]) | OR WHERE column IN(values)  | |
-| whereNotIn('column', [...values]) | WHERE column NOT IN(values)  | |
-| orWhereNotIn('column', [...values]) | OR WHERE column NOT IN(values)  | |
-| whereRaw('expression') | WHERE raw expression | |
-| orWhereRaw('expression') | OR WHERE raw expression | |
+| orWhere('column', 'operator', 'value') | OR WHERE column OPERATOR value | OK |
+| orWhereNull('column', 'operator', 'value') | OR WHERE column OPERATOR value | OK |
+| orWhereNull('column', 'operator', 'value') | OR WHERE column OPERATOR value | OK |
+| whereIn('column', [...values]) | WHERE column IN(values) | OK |
+| orWhereIn('column', [...values]) | OR WHERE column IN(values)  | OK |
+| whereNotIn('column', [...values]) | WHERE column NOT IN(values)  | OK |
+| orWhereNotIn('column', [...values]) | OR WHERE column NOT IN(values)  | OK |
+| whereRaw('expression') | WHERE raw expression | OK |
+| orWhereRaw('expression') | OR WHERE raw expression | OK |
 | | | |
 
 ## How to exec a sql manually?
 
-### *TODO*
+```javascript
+Animal.databaseLayer.executeBulkSql([...sqls], [...params])
+Animal.databaseLayer.executeSql(sql, params)
+```
 
 ## Working examples
 

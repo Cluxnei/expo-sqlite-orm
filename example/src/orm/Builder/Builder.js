@@ -18,7 +18,12 @@ export default class Builder extends DatabaseLayer {
         this.distinctSelect = false
         this.whereTypes = {
             basic: 'basic',
-            scoped: 'scoped'
+            scoped: 'scoped',
+            'null': 'null',
+            notNull: 'notNull',
+            'in': 'in',
+            notIn: 'notIn',
+            raw: 'raw',
         }
     }
 
@@ -68,6 +73,67 @@ export default class Builder extends DatabaseLayer {
         const {wheres} = callBackReturn ? callBackReturn : freshBuilder
         this.appendWhere({separator: 'OR', wheres}, this.whereTypes.scoped)
         return this
+    }
+
+    whereNull(column, separator = 'AND') {
+        this.appendWhere({column, separator: separator.toUpperCase()}, this.whereTypes['null'])
+        return this
+    }
+
+    orWhereNull(column) {
+        return this.whereNull(column, 'OR')
+    }
+
+    whereNotNull(column, separator = 'AND') {
+        this.appendWhere({column, separator: separator.toUpperCase()}, this.whereTypes.notNull)
+        return this
+    }
+
+    orWhereNotNull(column) {
+        return this.whereNotNull(column, 'OR')
+    }
+
+    whereIn(column, values, separator = 'AND') {
+        this.appendWhere({
+            column,
+            operator: 'IN',
+            separator: separator.toUpperCase(),
+            value: this.arrayToInStringList(values.length),
+            values
+        }, this.whereTypes['in'])
+        return this
+    }
+
+    orWhereIn(column, values) {
+        return this.whereIn(column, values, 'OR')
+    }
+
+    whereNotIn(column, values, separator = 'AND') {
+        this.appendWhere({
+            column,
+            operator: 'NOT IN',
+            separator: separator.toUpperCase(),
+            value: this.arrayToInStringList(values.length),
+            values
+        }, this.whereTypes.notIn)
+        return this
+    }
+
+    orWhereNotIn(column, values) {
+        return this.whereNotIn(column, values, 'OR')
+    }
+
+    whereRaw(expression, separator = 'AND') {
+        this.appendWhere({expression, separator: separator.toUpperCase()}, this.whereTypes.raw)
+        return this
+    }
+
+    orWhereRaw(expression) {
+        return this.whereRaw(expression, 'OR')
+    }
+
+    arrayToInStringList(numberOfValues = 0) {
+        return `(${'?,'.repeat(numberOfValues).substring(0, numberOfValues * 2 - 1)})`
     }
 
     select(...columns) {
@@ -133,6 +199,25 @@ export default class Builder extends DatabaseLayer {
     }
 
     resolveWhere(where, skipFirstSeparator = false) {
+        const resolves = {
+            [this.whereTypes['null']]: (w, skip) =>
+                `${skip ? '' : ` ${w.separator}`} ${w.column} IS NULL`,
+            [this.whereTypes.notNull]: (w, skip) =>
+                `${skip ? '' : ` ${w.separator}`} ${w.column} IS NOT NULL`,
+            [this.whereTypes['in']]: (w, skip) => {
+                this.queryValues.push(...w.values)
+                return `${skip ? '' : ` ${w.separator}`} ${w.column} IN ${w.value}`
+            },
+            [this.whereTypes.notIn]: (w, skip) => {
+                this.queryValues.push(...w.values)
+                return `${skip ? '' : ` ${w.separator}`} ${w.column} NOT IN ${w.value}`
+            },
+            [this.whereTypes.raw]: (w, skip) =>
+                `${skip ? '' : ` ${w.separator}`} ${w.expression}`
+        }
+        if (where.type in resolves) {
+            return resolves[where.type](where, skipFirstSeparator)
+        }
         this.queryValues.push(where.value)
         return `${skipFirstSeparator ? '' : ` ${where.separator}`} ${where.column} ${where.operator} ?`
     }
@@ -149,7 +234,7 @@ export default class Builder extends DatabaseLayer {
                 sql += this.resolveWhere(where, index === 0)
             }
         })
-        this.sql += ` WHERE ${sql}`
+        this.query += ` WHERE ${sql}`
     }
 
     buildLimit() {
