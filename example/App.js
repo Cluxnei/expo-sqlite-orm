@@ -7,31 +7,19 @@ export default function App() {
   useEffect(() => {
       (async () => {
           console.clear()
-          const a = User.query()
-              .where('name', '=', 'kelvin')
-              .orWhere('age', '>', 10)
-              .orWhere((q) =>
-                  q.where('active', '=', true)
-                  .where('role_id', '=', 3)
-                  .where((q) =>
-                      q.where('age', '!=', 3)
-                          .orWhere('age', 'is', 'odd')
-                  )
-              )
-              .orWhereNull('name')
-              .where((q) =>
-                  q.whereNull('name')
-                  .orWhereNotNull('name')
-                  .whereNotNull('name')
-              )
-              .whereIn('name', ['kelvin', 'cluxnei'])
-              .whereNotIn('name', ['cluxnei', 'kelvin'])
-              .orWhereIn('name', [1, 2, 3])
-              .orWhereNotIn('name', [3, 2, 1])
-              .whereRaw('AEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE')
-              .orWhereRaw('TOPEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEe')
-          a.debugSqlLogs = true
-          console.log(await a.toSql())
+          const props = {
+              name: 'Kelvin Cluxnei',
+              active: true,
+              weight: 30,
+              age: 20,
+              role_id: 1,
+              extra_info: {top: true}
+          }
+          await User.create(props)
+          console.log('User created')
+          console.log('Number of users before delete:', await User.query().count())
+          console.log(await User.query().where('name', 'like', '%kelvin%').destroy())
+          console.log('Number of users after delete:', await User.query().count())
       })()
 
   }, [])

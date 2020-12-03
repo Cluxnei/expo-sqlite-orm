@@ -5,7 +5,7 @@ import DatabaseLayer from './DatabaseLayer';
 
 export default class BaseModel {
     constructor(props = {}) {
-        this.debugLogs = false
+        this.__debugLogs = false
         this.setProperties(props)
     }
 
@@ -20,11 +20,11 @@ export default class BaseModel {
     }
 
     get builder() {
-        return new Builder(this.database, this.tableName, this.schemaDefinition, this.debugLogs)
+        return new Builder(this.database, this.tableName, this.schemaDefinition, this.__debugLogs)
     }
 
     get databaseLayer() {
-        return new DatabaseLayer(this.database, this.tableName, this.debugLogs)
+        return new DatabaseLayer(this.database, this.tableName, this.__debugLogs)
     }
 
     get tableName() {
@@ -35,8 +35,8 @@ export default class BaseModel {
         throw new Error('Schema definition not defined')
     }
 
-    set debugSqlLogs(logs) {
-        this.debugLogs = Boolean(logs)
+    set __debugSqlLogs(logs) {
+        this.__debugLogs = Boolean(logs)
     }
 
     tableDefinition() {
@@ -67,12 +67,38 @@ export default class BaseModel {
         return new this().dropTable()
     }
 
-    save() {
+    static async createMany(arrayOfProps) {
+        const _this = new this()
+        const result = await _this.query().createMany(arrayOfProps)
+        console.log(result)
+    }
+
+    static async create(props) {
+        if (Array.isArray(props)) {
+            return this.createMany(props)
+        }
+        const _this = new this()
+        const insertId = await _this.query().create(props)
+        if (insertId) {
+            return _this.query().find(insertId).first();
+        }
+        return false
+    }
+
+    async save() {
         const primaryKey = this.schemaDefinition.primaryKey
-        const props = this.schemaDefinition.columnsNames.map((column) => this[column])
+        const props = {}
+        this.schemaDefinition.columnsNames.forEach((column) => {
+            props[column] = this[column]
+        })
         if (props[primaryKey]) {
             return this.query().find(props[primaryKey]).update(props)
         }
-        return this.query().create(props)
+        const insertId = await this.query().create(props)
+        if (insertId) {
+            this[primaryKey] = insertId
+            return true
+        }
+        return false
     }
 }

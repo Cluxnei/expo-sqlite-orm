@@ -11,9 +11,14 @@ export default class Builder extends DatabaseLayer {
         this.schemaDefinition = schemaDefinition
         // query builder
         this.selectColumns = new Set
+        this.isCount = false
+        this.isDestroy = false
         this.wheres = []
         this.queryValues = []
         this.query = ''
+        this.orderByColumns = new Set
+        this.isOrderByDesc = false
+        this.groupByColumns = new Set
         this.limitRows = null
         this.distinctSelect = false
         this.whereTypes = {
@@ -123,6 +128,29 @@ export default class Builder extends DatabaseLayer {
         return this.whereNotIn(column, values, 'OR')
     }
 
+    orderBy(...columns) {
+        this.isOrderByDesc = false
+        this.orderByColumns.clear()
+        columns.forEach((column) => {
+            this.orderByColumns.add(column)
+        })
+        return this
+    }
+
+    orderByDesc(...columns) {
+        this.orderBy(...columns)
+        this.isOrderByDesc = true
+        return this
+    }
+
+    groupBy(...columns) {
+        this.groupByColumns.clear()
+        columns.forEach((column) => {
+            this.groupByColumns.add(column)
+        })
+        return this
+    }
+
     whereRaw(expression, separator = 'AND') {
         this.appendWhere({expression, separator: separator.toUpperCase()}, this.whereTypes.raw)
         return this
@@ -146,6 +174,19 @@ export default class Builder extends DatabaseLayer {
         return this
     }
 
+    count(column) {
+        const countColumn = column ? column : this.schemaDefinition.primaryKey.name
+        this.selectColumns.clear()
+        this.selectColumns.add(countColumn)
+        this.isCount = true
+        return this.get().then(([first]) => {
+            if (typeof first === 'object') {
+                return Object.values(first)[0]
+            }
+            return typeof first === 'undefined' ? 0 : -1
+        })
+    }
+
     limit(count) {
         if (count) {
             this.limitRows = count
@@ -167,8 +208,11 @@ export default class Builder extends DatabaseLayer {
 
     buildQuery() {
         this.buildSelect()
+        this.buildDelete()
         this.buildFrom()
         this.buildWhere()
+        this.buildGroupBy()
+        this.buildOrderBy()
         this.buildLimit()
         this.concatSemicolon()
     }
@@ -179,7 +223,18 @@ export default class Builder extends DatabaseLayer {
         }
         const columns = [...this.selectColumns].join(',')
         this.clearQuery()
-        this.query += `SELECT ${this.distinctSelect ? 'DISTINCT' : ''} ${columns}`
+        if (this.isCount) {
+            this.query += `SELECT COUNT(${this.distinctSelect ? 'DISTINCT ' : ''}${[...this.selectColumns][0]})`
+        } else {
+            this.query += `SELECT ${this.distinctSelect ? 'DISTINCT' : ''} ${columns}`
+        }
+    }
+
+    buildDelete() {
+        if (this.isDestroy) {
+            this.clearQuery()
+            this.query += 'DELETE'
+        }
     }
 
     buildFrom() {
@@ -237,6 +292,18 @@ export default class Builder extends DatabaseLayer {
         this.query += ` WHERE ${sql}`
     }
 
+    buildGroupBy() {
+        if (this.groupByColumns.size > 0) {
+            this.query += ` GROUP BY ${[...this.groupByColumns].join(',')}`
+        }
+    }
+
+    buildOrderBy() {
+        if (this.orderByColumns.size > 0) {
+            this.query += ` ORDER BY ${[...this.orderByColumns].join(',')} ${this.isOrderByDesc ? 'DESC' : 'ASC'}`
+        }
+    }
+
     buildLimit() {
         if (this.limitRows) {
             this.queryValues.push(this.limitRows)
@@ -261,15 +328,76 @@ export default class Builder extends DatabaseLayer {
         return this.executeSql(this.query, this.queryValues).then(({rows: {_array}}) => _array)
     }
 
+    execute() {
+        this.buildQuery()
+        return this.executeSql(this.query, this.queryValues).then((result) => result)
+    }
+
     find(primaryKey) {
         this.where(this.schemaDefinition.primaryKey.name, '=', primaryKey)
         return this
     }
 
+    first() {
+        this.limit(1)
+        return this.get().then(([first]) => first)
+    }
+
+    sanitizeValues(props, columns) {
+        const _columns = columns ? columns : Object.keys(props)
+        return _columns.map((column) => {
+            const schema = this.schemaDefinition.findColumnByName(column)
+            if (schema.isJson() && typeof props[column] !== 'string') {
+                return JSON.stringify(props[column])
+            }
+            if (schema.isBoolean()) {
+                return Boolean(props[column]) ? 1 : 0
+            }
+            if (schema.isTimestampcolumn && schema.isUseCurrent) {
+                return new Date().toISOString()
+            }
+            return props[column]
+        })
+    }
+
+    generateInsertSql(columns, many = false, insertCount = 0) {
+        if (many) {
+            const values = `(${columns.map(() => '?').join(',')}),`.repeat(insertCount)
+            return `INSERT INTO ${this.tableName} (${columns.join(',')}) VALUES ${values.substring(0, values.length - 1)}`
+        }
+        return `INSERT INTO ${this.tableName} (${columns.join(',')}) VALUES (${columns.map(() => '?').join(',')})`
+    }
+
     create(props) {
-        const columns = Object.keys(props), values = Object.values(props)
-        const sql = `INSERT INTO ${this.tableName} (${columns.join(',')}) VALUES (${columns.map(() => '?').join(',')})`
-        return this.executeSql(sql, values)
+        const columns = Object.keys(props)
+        const sql = this.generateInsertSql(columns)
+        const values = this.sanitizeValues(props, columns)
+        return this.executeSql(sql, values).then(({insertId}) => insertId)
+    }
+
+    createMany(arrayOfProps) {
+        const columns = Object.keys(arrayOfProps[0])
+        const columnsLength = columns.length
+        const values = arrayOfProps.map((props) => this.sanitizeValues(props))
+        const t = values.length - 1
+        for (let i = 0; i < t; i++) {
+            const l = values[i].length, m = values[i + 1].length
+            if (l !== m || l !== columnsLength || m !== columnsLength) {
+                throw new Error('Multiple insert must have same props values length in all entries')
+            }
+        }
+        const singleLevelValues = []
+        values.forEach((value) => {
+            singleLevelValues.push(...value)
+        })
+        const sql = this.generateInsertSql(columns, true, values.length)
+        return this.executeSql(sql, singleLevelValues)
+    }
+
+    destroy() {
+        this.isDestroy = true
+        this.buildQuery()
+        return this.execute().then(({rowsAffected}) => rowsAffected)
     }
 
 }

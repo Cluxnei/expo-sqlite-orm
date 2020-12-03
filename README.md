@@ -227,10 +227,12 @@ Animal.query().destroy() // Also destroys all
 | ---------------- |:----------------:|:----:|
 | query() | Start a query builder | OK |
 | where('column', 'operator', 'value') | WHERE column OPERATOR value | OK |
+| where((query) => query.where(...)...) | WHERE (column OPERATOR value ...) | OK |
 | whereNull('column') | WHERE column IS NULL | OK |
 | whereNotNull('column') | WHERE column NOT IS NULL | OK |
-| orderBy('columns') | ORDER BY column ASC | |
-| orderByDesc('columns') | ORDER BY column DESC | |
+| orderBy(...columns) | ORDER BY ...columns ASC | OK |
+| orderByDesc(...columns) | ORDER BY ...columns DESC | OK |
+| groupBy(...columns) | GROUP BY ...columns | OK |
 | limit(count) | LIMIT count | OK |
 | count('column') | SELECT COUNT(column) default is id | |
 | max('column') | SELECT max(column) | |
