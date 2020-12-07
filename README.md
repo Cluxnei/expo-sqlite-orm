@@ -234,16 +234,15 @@ Animal.query().destroy() // Also destroys all
 | orderByDesc(...columns) | ORDER BY ...columns DESC | OK |
 | groupBy(...columns) | GROUP BY ...columns | OK |
 | limit(count) | LIMIT count | OK |
-| count('column') | SELECT COUNT(column) default is id | |
+| count('column') | SELECT COUNT(column) default is id | OK |
 | max('column') | SELECT max(column) | |
 | min('column') | SELECT min(column) | |
 | avg('column') | SELECT avg(column) | |
 | select(...columns) or select(['column', ...]) | SELECT ... | OK |
 | selectRaw('raw expression') | SELECT raw expression | OK |
-| exists() | QUERY ... EXISTS | |
-| doesntExist() | QUERY ... NOT EXISTS | |
+| exists() | EXISTS(QUERY ...) | OK |
+| notExists() | NOT EXISTS(QUERY ...) | OK |
 | distinct('column') | SELECT DISTINCT column | OK |
-| groupBy(...columns) | QUERY ... GROUP BY columns | |
 | orWhere('column', 'operator', 'value') | OR WHERE column OPERATOR value | OK |
 | orWhereNull('column', 'operator', 'value') | OR WHERE column OPERATOR value | OK |
 | orWhereNull('column', 'operator', 'value') | OR WHERE column OPERATOR value | OK |

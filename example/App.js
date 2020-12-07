@@ -6,7 +6,7 @@ export default function App() {
 
   useEffect(() => {
       (async () => {
-          console.clear()
+          /*
           const props = {
               name: 'Kelvin Cluxnei',
               active: true,
@@ -20,6 +20,14 @@ export default function App() {
           console.log('Number of users before delete:', await User.query().count())
           console.log(await User.query().where('name', 'like', '%kelvin%').destroy())
           console.log('Number of users after delete:', await User.query().count())
+
+           */
+          console.log(
+              await User.query().count(),
+              await User.query().min(),
+              await User.query().max(),
+              await User.query().avg(),
+          )
       })()
 
   }, [])

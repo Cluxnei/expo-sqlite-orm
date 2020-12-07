@@ -12,7 +12,12 @@ export default class Builder extends DatabaseLayer {
         // query builder
         this.selectColumns = new Set
         this.isCount = false
+        this.isMax = false
+        this.isMin = false
+        this.isAvg = false
         this.isDestroy = false
+        this.isExists = false
+        this.isNotExists = false
         this.wheres = []
         this.queryValues = []
         this.query = ''
@@ -175,16 +180,46 @@ export default class Builder extends DatabaseLayer {
     }
 
     count(column) {
-        const countColumn = column ? column : this.schemaDefinition.primaryKey.name
-        this.selectColumns.clear()
-        this.selectColumns.add(countColumn)
+        this.freshSelect(column)
         this.isCount = true
+        return this.firstNumber()
+    }
+
+    max(column) {
+        this.freshSelect(column)
+        this.isMax = true
+        return this.firstNumber()
+    }
+
+    min(column) {
+        this.freshSelect(column)
+        this.isMin = true
+        return this.firstNumber()
+    }
+
+    avg(column) {
+        this.freshSelect(column)
+        this.isAvg = true
+        return this.firstNumber()
+    }
+
+    firstNumber() {
         return this.get().then(([first]) => {
             if (typeof first === 'object') {
                 return Object.values(first)[0]
             }
             return typeof first === 'undefined' ? 0 : -1
         })
+    }
+
+    freshSelect(column) {
+        const col = this.columnOrPrimaryKey(column)
+        this.selectColumns.clear()
+        this.selectColumns.add(col)
+    }
+
+    columnOrPrimaryKey(column) {
+        return column ? column : this.schemaDefinition.primaryKey.name
     }
 
     limit(count) {
@@ -214,7 +249,10 @@ export default class Builder extends DatabaseLayer {
         this.buildGroupBy()
         this.buildOrderBy()
         this.buildLimit()
-        this.concatSemicolon()
+        !this.isExists && !this.isNotExists && this.concatSemicolon()
+        if (this.isExists || this.isNotExists) {
+            this.query = `SELECT ${this.isNotExists ? 'NOT ' : ''}EXISTS(${this.query});`
+        }
     }
 
     buildSelect() {
@@ -223,8 +261,10 @@ export default class Builder extends DatabaseLayer {
         }
         const columns = [...this.selectColumns].join(',')
         this.clearQuery()
-        if (this.isCount) {
-            this.query += `SELECT COUNT(${this.distinctSelect ? 'DISTINCT ' : ''}${[...this.selectColumns][0]})`
+        if (this.isCount || this.isMax || this.isMin || this.isAvg) {
+            const method = this.isCount
+                ? 'COUNT' : (this.isMax ? 'MAX' : (this.isMin ? 'MIN' : (this.isAvg ? 'AVG' : '')));
+            this.query += `SELECT ${method}(${this.distinctSelect ? 'DISTINCT ' : ''}${[...this.selectColumns][0]})`
         } else {
             this.query += `SELECT ${this.distinctSelect ? 'DISTINCT' : ''} ${columns}`
         }
@@ -392,6 +432,28 @@ export default class Builder extends DatabaseLayer {
         })
         const sql = this.generateInsertSql(columns, true, values.length)
         return this.executeSql(sql, singleLevelValues)
+    }
+
+    exists() {
+        this.isExists = true
+        this.buildQuery()
+        return this.get().then(([first]) => {
+            if (typeof first === 'object') {
+                return Boolean(parseInt(String(Object.values(first)[0]), 10))
+            }
+            return false
+        })
+    }
+
+    notExists() {
+        this.isNotExists = true
+        this.buildQuery()
+        return this.get().then(([first]) => {
+            if (typeof first === 'object') {
+                return Boolean(parseInt(Object.values(first)[0], 10))
+            }
+            return false
+        })
     }
 
     destroy() {
